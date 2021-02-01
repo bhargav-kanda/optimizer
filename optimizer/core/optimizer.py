@@ -89,9 +89,9 @@ class OpFormulation:
 		self._values.append(values)
 		return values
 
-	def add_rule(self, name, indeces, lhs, comparator, rhs, flexible=False, warn_for_flexing=True,
+	def add_rule(self, name, indeces, lhs, comparator, rhs, exclude=None, flexible=False, warn_for_flexing=True,
 	             debug=False, talk_to_me=False):
-		rule = op.Rule(name, indeces, lhs, comparator, rhs, flexible, warn_for_flexing, debug, talk_to_me)
+		rule = op.Rule(name, indeces, lhs, comparator, rhs, exclude, flexible, warn_for_flexing, debug, talk_to_me)
 		self._rules.append(rule)
 		return rule
 

@@ -11,7 +11,7 @@ sms = op.OpFormulation('star_movies', max=True)
 
 # data = globals.dv_df
 data = None
-movies, i = sms.create_range(name='movie_name', index='i', data=data)
+movies, i = sms.create_range(name='movie_name', data=data, index='i')
 dates, j = sms.create_range(name='dates', data=data, order=op.ASCENDING, index='j')
 slots, k = sms.create_range(name='slots', data=data, order=globals.sort_ts, index='k')
 
@@ -29,24 +29,22 @@ fixed_airings = sms.create_set(name='fixed_airings', ranges=[movies, dates, slot
 
 sundays = dates.filter(lambda row: row.weekday() == 6)
 
-fox_movies = sms.create_set(name='family_movies', ranges=[movies], values=globals.fox_df['movie_name'])
-family_movies = sms.create_set(name='family_movies', ranges=[movies], values=globals.family_df['movie_name'])
+fox_movies = sms.create_set(name='family_movies', ranges=[movies], values=globals.fox_df['movie_name'].values.tolist())
+family_movies = sms.create_set(name='family_movies', ranges=[movies], values=globals.family_df['Cleaned Movie Name'].values.tolist())
 
 motm_originals = sms.create_set(name='motm_originals', ranges=[movies, dates, slots])
 motw_originals = sms.create_set(name='motw_originals', ranges=[movies, dates, slots])
 
-motm_originals.set_values(globals.fixed_df['type' == 'MOTM'][['movie_name', 'dates', 'slots']])
-motw_originals.set_values(globals.fixed_df['type' == 'MOTW'][['movie_name', 'dates', 'slots']])
+motm_originals.set_values(globals.fixed_df[globals.fixed_df['type'] == 'MOTM'][['movie_name', 'dates', 'slots']])
+motw_originals.set_values(globals.fixed_df[globals.fixed_df['type'] == 'MOTW'][['movie_name', 'dates', 'slots']])
 
 
 r1 = sms.add_rule(name='indicator_1', indeces=[i], lhs=op.OpSum(airings[i, :, :]), rhs=movie_used[i] * 10000000,
-                      comparator=op.LESSTHAN)
+                  comparator=op.LESSTHAN)
 
-r2 = sms.add_rule(name='indicator_2', indeces=[i], lhs=op.OpSum(airings[i, :, :]),
-                      rhs=(movie_used[i]-1) * 10000000 + 1, comparator=op.GREATERTHAN)
+r2 = sms.add_rule(name='indicator_2', indeces=[i], lhs=op.OpSum(airings[i, :, :]), rhs=(movie_used[i]-1) * 10000000 + 1, comparator=op.GREATERTHAN)
 
-sms.add_rule(name='one_movie_in_one_slot', indeces=[j, k], lhs=op.OpSum(airings[:, j, k]), rhs=1,
-                 comparator=op.EQUALTO)
+sms.add_rule(name='one_movie_in_one_slot', indeces=[j, k], lhs=op.OpSum(airings[:, j, k]), rhs=1, comparator=op.EQUALTO)
 
 sms.add_rule(name='limit_slot_repetition', indeces=[i, k], lhs=op.OpSum(airings[i, :, k]),
                  rhs='max_value_or_fixed_number(3, movies, slots, None)', comparator=op.LESSTHAN)
@@ -60,7 +58,7 @@ sms.add_rule(name='max_one_airing_per_day', indeces=[i, j], lhs=op.OpSum(airings
 sms.add_rule(name='max_airings_per_movie', indeces=[i], lhs=op.OpSum(airings[i, :, :]),
                  comparator=op.LESSTHAN, rhs='get_max_airings_for_title(movies)')
 
-sms.add_rule(name='family_movies_on_sundays', indeces=[sundays, k.filter([1, 2])],
+sms.add_rule(name='family_movies_on_sundays', indeces=[sundays, slots.filter([1, 2])],
                  lhs=op.OpSum(airings[family_movies, j, k]),
                  comparator=op.GREATERTHAN, rhs=1)
 

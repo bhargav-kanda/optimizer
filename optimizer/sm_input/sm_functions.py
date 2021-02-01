@@ -4,6 +4,19 @@ from datetime import time
 import optimizer.sm_input.sm_globals as globals
 
 
+REPO_PATH = '/home/bhargava/TA_Lab/'
+INPUT_PATH = REPO_PATH + 'optimizer/'
+input_folder = 'input'
+
+
+
+COLUMN_NAME_MAP = {
+	'movies': 'movie_name',
+	'dates': 'day',
+	'slots': 'slots',
+}
+
+
 def get_time_from_str(str):
 	str = str.lower()
 	hour = int(str[:-2])
@@ -26,19 +39,6 @@ def get_dates_in_between(from_date, to_date):
 		dates.append(from_date + timedelta(days=i))
 	dates.append(to_date)
 	return [pd.to_datetime(datetime.strftime(date, '%Y-%m-%d')) for date in dates]
-
-
-REPO_PATH = '/home/bhargava/TA_Lab/'
-INPUT_PATH = REPO_PATH + 'optimizer/'
-input_folder = 'input'
-
-
-
-COLUMN_NAME_MAP = {
-	'movies': 'movie_name',
-	'dates': 'day',
-	'slots': 'slots',
-}
 
 
 def get_unique_movies():

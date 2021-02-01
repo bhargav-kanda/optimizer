@@ -1,9 +1,10 @@
 from datetime import time
 import pandas as pd
 
-REPO_PATH = '/home/bhargava/TA_Lab/'
+REPO_PATH = '/home/bhargava/optimizer/'
 INPUT_PATH = REPO_PATH + 'optimizer/'
 input_folder = 'input'
+
 
 def get_time_from_str(str):
 	str = str.lower()
