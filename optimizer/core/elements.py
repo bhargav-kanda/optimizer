@@ -2,8 +2,11 @@ from sympy import oo
 from optimizer.core.helper_functions import *
 from datetime import datetime
 import sympy as sp
-from sympy.core.compatibility import is_sequence
 import itertools
+
+
+def is_sequence(x):
+	return isinstance(x, (list, tuple))
 
 
 class ArrayIndex(sp.Idx):

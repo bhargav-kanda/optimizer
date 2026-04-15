@@ -104,6 +104,8 @@ venv.bak/
 .mypy_cache/
 .idea/*
 
-# my files
-optimizer/input/*
+# PuLP solver temp files
+*.lp
+*.mps
+*.sol
 
