@@ -40,12 +40,14 @@ class Rule:
 	def create_constraints(self, base_context):
 		if [x for x in self.indeces if x.values is None or len(x.values) == 0]:
 			raise Exception('Ranges - {} do not have values'.format([x.refers_to for x in self.indeces if not x.refers_to.values]))
+		if not self.indeces:
+			# Scalar constraint (no indexing)
+			self.constraints = pd.Series([self.create_constraint(dict(base_context), 0)], name=self.name)
+			return
 		values_list = [x.values for x in self.indeces]
 		cp = list(itertools.product(*values_list))
 		index_names = [x.name for x in self.indeces]
 		self.constraints = pd.DataFrame(columns=index_names + [self.name])
-		start_time = datetime.now()
-		print('Starting creation of {} constraints for {} rule at {}'.format(len(cp), self.name, start_time))
 		for index, combination in enumerate(cp):
 			if self.exclude is not None and getattr(self.exclude, 'values', None) is not None \
 					and is_excluded(dict(zip(self.indeces, list(combination))), self.exclude.values):
@@ -54,9 +56,6 @@ class Rule:
 			context.update(base_context)
 			self.constraints.loc[len(self.constraints)] = list(combination) + [self.create_constraint(context, index)]
 		self.constraints = self.constraints.set_index(index_names)[self.name]
-		end_time = datetime.now()
-		time_taken = (end_time-start_time).seconds
-		print('Finished creation of {} constraints for {} rule in {} seconds'.format(len(cp), self.name, time_taken))
 
 
 class Constraint:

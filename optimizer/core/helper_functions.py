@@ -185,9 +185,7 @@ def get_sp_array_rep(indexed_array):
 
 
 def eval_expr(expr, context):
-	# import pdb
-	# pdb.set_trace()
-	sub_exprs = list(expr.expr_free_symbols)
+	sub_exprs = list(expr.free_symbols)
 	if len(sub_exprs) == 1 and sub_exprs[0] == expr:
 		return expr.xreplace(context)
 	new_context = context.copy()
