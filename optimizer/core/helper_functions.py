@@ -3,7 +3,10 @@ import sympy as sp
 from collections.abc import Iterable
 from datetime import datetime
 import optimizer as op
-from sympy.core.compatibility import is_sequence
+
+
+def is_sequence(x):
+	return isinstance(x, (list, tuple))
 
 
 def is_cleanslice(s):
@@ -194,8 +197,40 @@ def eval_expr(expr, context):
 	return val
 
 
-def is_excluded(combination_dict, exclude_df):
-	return 0
+def is_excluded(combination_dict, exclude_values):
+	"""Check if a combination of index values is in the exclusion set.
+
+	Args:
+		combination_dict: Dict mapping OpIndex -> value for the current combination.
+		exclude_values: DataFrame where each row is a combination to exclude, with
+			columns named by the index.refers_to.name (if ref_range) or index.name.
+
+	Returns:
+		True if the combination matches any row in exclude_values.
+	"""
+	import pandas as pd
+	if exclude_values is None:
+		return False
+	if not isinstance(exclude_values, pd.DataFrame) or exclude_values.empty:
+		return False
+	for _, row in exclude_values.iterrows():
+		match = True
+		for index_obj, value in combination_dict.items():
+			col_name = None
+			if hasattr(index_obj, 'refers_to') and index_obj.refers_to is not None \
+					and hasattr(index_obj.refers_to, 'name') \
+					and index_obj.refers_to.name in exclude_values.columns:
+				col_name = index_obj.refers_to.name
+			elif hasattr(index_obj, 'name') and index_obj.name in exclude_values.columns:
+				col_name = index_obj.name
+			if col_name is None:
+				continue
+			if row[col_name] != value:
+				match = False
+				break
+		if match:
+			return True
+	return False
 
 
 def clean_indeces(indeces, obj):

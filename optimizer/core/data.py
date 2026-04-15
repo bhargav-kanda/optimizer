@@ -159,9 +159,7 @@ class OpSet(IndexedBase):
 
 	@property
 	def values(self):
-		import pdb
-		pdb.set_trace()
-		if self.values_ref is None:
+		if getattr(self, 'values_ref', None) is None:
 			raise Exception('Values for set {} are not set yet'.format(self.name))
 		if [x for x in self.indeces if x.values is None]:
 			raise Exception(
@@ -269,9 +267,7 @@ class OpVariables(IndexedBase):
 		try:
 			range_name = '_'.join([r.refers_to.name for r in indeces])
 		except Exception as e:
-			import pdb
-			pdb.set_trace()
-			raise Exception(e)
+			raise Exception('Failed to build range name from indices: {}'.format(e))
 		name = '{}{}{}'.format(prefix, range_name, suffix)
 		# if all([x.length for x in indeces]):
 		return super().__new__(cls, name, tuple([x.length for x in indeces]))
@@ -341,8 +337,6 @@ class OpVariables(IndexedBase):
 		self._shape = sp.Tuple(*[x.length for x in self.indeces])
 
 	def __getitem__(self, indeces, **kw_args):
-		import pdb
-		pdb.set_trace()
 		return get_item(indeces, self, **kw_args)
 
 	def create(self, data=None):

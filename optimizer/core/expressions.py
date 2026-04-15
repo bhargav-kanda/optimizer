@@ -302,6 +302,15 @@ class DotProduct:
 		self.arrays = args
 
 	def evaluate(self):
-		from operator import mul
-		return 0
+		"""Compute the dot product of the stored arrays.
+
+		Returns the sum of element-wise products. All arrays are pandas Series
+		of the same length at this point (normalized in __init__).
+		"""
+		if not self.arrays:
+			return 0
+		result = self.arrays[0].copy()
+		for arr in self.arrays[1:]:
+			result = result * arr
+		return result.sum()
 
