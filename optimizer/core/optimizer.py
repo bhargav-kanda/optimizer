@@ -132,9 +132,57 @@ class OpProblem:
 		self.objective = exp
 		return self
 
-	def add_contraints(self, constraints):
+	def add_constraints(self, constraints):
 		self.constraints += constraints
 		return self
+
+	# Historical alias (kept for backward compatibility)
+	add_contraints = add_constraints
+
+	def check_conflicts(self, mode='lite'):
+		"""Check constraints for conflicts and raise if any errors are found.
+
+		Args:
+			mode: 'lite' (fast heuristic checks, no solver) or 'pro' (runs a
+				feasibility LP to catch interactions across multiple constraints).
+
+		Returns:
+			List of Conflict objects (including warnings).
+
+		Raises:
+			ConflictError if any conflicts have severity=ERROR.
+		"""
+		from optimizer.core.conflict_detection import (
+			detect_conflicts, detect_conflicts_lp, ConflictSeverity,
+		)
+		from optimizer.core.exceptions import ConflictError
+		if mode == 'pro':
+			conflicts = detect_conflicts_lp(self.constraints)
+		elif mode == 'lite':
+			conflicts = detect_conflicts(self.constraints)
+		else:
+			raise ValueError(f"Unknown conflict mode: {mode!r}. Use 'lite' or 'pro'.")
+		errors = [c for c in conflicts if c.severity == ConflictSeverity.ERROR]
+		if errors:
+			raise ConflictError(
+				f"{len(errors)} constraint conflict(s) detected",
+				conflicts=errors,
+			)
+		return conflicts
+
+	def prune_constraints(self):
+		"""Remove constraints that are implied by equality constraints and variable fixings.
+
+		A constraint is considered redundant if it's trivially satisfied once
+		variables fixed by equality constraints (or PartialSolution) are substituted.
+
+		Returns:
+			Number of constraints pruned.
+		"""
+		from optimizer.core.pruning import prune_constraints as _prune
+		before = len(self.constraints)
+		self.constraints = _prune(self.constraints)
+		return before - len(self.constraints)
 
 	def solve(self, solver=None, **kwargs):
 		"""Solve the optimization problem using the given solver backend.

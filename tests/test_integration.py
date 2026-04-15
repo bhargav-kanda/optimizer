@@ -87,6 +87,59 @@ def test_mip_via_pulp():
 	assert abs(result.objective_value - 4.0) < 1e-4  # Integer optimum
 
 
+def test_opproblem_check_conflicts_lite_raises_on_error():
+	"""OpProblem.check_conflicts(mode='lite') should raise ConflictError when infeasible."""
+	from optimizer.core.optimizer import OpProblem, OpFormulation
+	from optimizer.core.exceptions import ConflictError
+	x = Variable('x', min=0, max=100)
+	f = OpFormulation('bad', max=False)
+	problem = OpProblem(name='bad', formulation=f, max=False)
+	problem.objective = x
+	problem.constraints = [
+		_MockConstraint(x, '<=', 3),
+		_MockConstraint(x, '>=', 8),
+	]
+	with pytest.raises(ConflictError) as exc_info:
+		problem.check_conflicts(mode='lite')
+	assert len(exc_info.value.conflicts) >= 1
+
+
+def test_opproblem_check_conflicts_pro_catches_multi_var():
+	from optimizer.core.optimizer import OpProblem, OpFormulation
+	from optimizer.core.exceptions import ConflictError
+	x = Variable('x', min=0, max=10)
+	y = Variable('y', min=0, max=10)
+	f = OpFormulation('bad', max=False)
+	problem = OpProblem(name='bad', formulation=f, max=False)
+	problem.objective = x + y
+	# Lite would miss this combined infeasibility; pro catches it
+	problem.constraints = [
+		_MockConstraint(x + y, '>=', 50),
+		_MockConstraint(x, '<=', 10),
+		_MockConstraint(y, '<=', 10),
+	]
+	with pytest.raises(ConflictError):
+		problem.check_conflicts(mode='pro')
+
+
+def test_opproblem_prune_constraints():
+	"""prune_constraints() should remove redundant inequalities given fixings."""
+	from optimizer.core.optimizer import OpProblem, OpFormulation
+	x = Variable('x', min=0, max=100)
+	y = Variable('y', min=0, max=100)
+	f = OpFormulation('prune', max=True)
+	problem = OpProblem(name='prune', formulation=f, max=True)
+	problem.objective = x + y
+	problem.constraints = [
+		_MockConstraint(x, '==', 2),        # fixing
+		_MockConstraint(x, '<=', 10),       # redundant (2 <= 10)
+		_MockConstraint(y, '<=', 5),        # not redundant
+	]
+	pruned_count = problem.prune_constraints()
+	assert pruned_count == 1
+	assert len(problem.constraints) == 2
+
+
 def test_opformulation_solve_delegation():
 	"""OpProblem.solve() should delegate to PulpSolver by default."""
 	bread = Variable('bread', min=0)
